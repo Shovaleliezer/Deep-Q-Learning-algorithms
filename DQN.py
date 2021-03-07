@@ -6,7 +6,7 @@ from torch.nn import MSELoss
 import numpy as np
 
 class DQN(nn.Module):
-    def __init__(self, input_shape, num_actions, lr=0.001):
+    def __init__(self, input_shape, num_actions, name, lr=0.001):
         super(DQN, self).__init__()
         
         self.input_shape = input_shape
@@ -74,3 +74,55 @@ class Memory:
             state_ = self.next_state_memory[indx]
             done = self.done_memory[indx]
             return state, aciton, reward, state_, done
+
+class Agent:
+    def __init__(self, input_shape, num_actions=4, lr=0.001, epsilon=1, epsilon_end=0.01, epsilon_decay=1e-6, gamma=0.99):
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_end = epsilon_end
+        self.Q_eval = DQN(input_shape, num_actions, 'eval', lr)
+        self.Q_next = DQN(input_shape, num_actions, 'next', lr)
+        self.memory = Memory(10000, input_shape)
+        self.action_space = [x for x in range(num_actions)]
+    
+    def choose_action(self, obs):
+        random = np.random.rand()
+        if random <= self.epsilon:
+            action = np.random.choice(self.action_space)
+        else:
+            s = torch.Tensor(obs, dtype=float).to(self.Q_eval.device)
+            actions = self.Q_eval.forward(s)
+            action = torch.argmax(actions).item()
+        return action
+    
+    def decay_eps(self):
+        self.epsilon = (self.epsilon - self.epsilon_decay) if self.epsilon_end < self.epsilon else self.epsilon_end
+    
+    def write_memory(self, s, a, r, s_, d):
+        self.memory.store_memory(s, a, r, s_, d)
+    
+    def get_memory(self, batch_size):
+        return self.memory.sample_memory(batch_size)
+    
+    def switch_learner(self):
+        self.Q_next.load_state_dict(self.Q_eval.state_dict())
+    
+    def learn(self, batch_size=4):
+        self.Q_eval.optim.zero_grad()
+        s, a, r, s_, d = self.get_memory(batch_size)
+        states = torch.tensor(s, dtype=float).to(self.Q_eval.device)
+        actions = torch.tensor(a).to(self.Q_eval.device)
+        rewards = torch.tensor(r).to(self.Q_eval.device)
+        states_ = torch.tensor(s_, dtype=float).to(self.Q_eval.device)
+        inds = [0,1,2,3]
+        q_pred = self.Q_eval.forward(states)[inds, actions]
+        q_next = self.Q_next.forward(states_).max()
+        q_traget = rewards + self.gamma*q_next
+        agent_loss = self.Q_eval.loss(q_traget, q_pred)
+        agent_loss.backward()
+        self.Q_eval.optim.step()
+        self.decay_eps()
+
+
+
