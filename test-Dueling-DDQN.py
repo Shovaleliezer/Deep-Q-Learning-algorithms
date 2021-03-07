@@ -8,7 +8,7 @@
 import gym
 import torch
 import numpy as np
-from Dueling-DQN import AgentDuelingDDQN 
+from Dueling-DDQN import AgentDuelingDDQN 
 NUM_OF_GAMES = 10000
 env = gym.make('Space-Invaders-v0')
 INPUT_SHAPE = (185,95)
