@@ -75,7 +75,7 @@ class Memory:
             done = self.done_memory[indx]
             return state, aciton, reward, state_, done
 
-class Agent:
+class AgentDQN:
     def __init__(self, input_shape, num_actions=4, lr=0.001, epsilon=1, epsilon_end=0.01, epsilon_decay=1e-6, gamma=0.99):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -85,6 +85,8 @@ class Agent:
         self.Q_next = DQN(input_shape, num_actions, 'next', lr)
         self.memory = Memory(10000, input_shape)
         self.action_space = [x for x in range(num_actions)]
+        self.step_learn = 0
+        self.learn_traget = 1000
     
     def choose_action(self, obs):
         random = np.random.rand()
@@ -106,8 +108,9 @@ class Agent:
         return self.memory.sample_memory(batch_size)
     
     def switch_learner(self):
-        self.Q_next.load_state_dict(self.Q_eval.state_dict())
-    
+        if self.step_learn % self.learn_traget == 0:
+            self.Q_next.load_state_dict(self.Q_eval.state_dict())
+
     def learn(self, batch_size=4):
         self.Q_eval.optim.zero_grad()
         s, a, r, s_, d = self.get_memory(batch_size)
@@ -118,11 +121,12 @@ class Agent:
         inds = [0,1,2,3]
         q_pred = self.Q_eval.forward(states)[inds, actions]
         q_next = self.Q_next.forward(states_).max()
+        q_next[done] = 0
         q_traget = rewards + self.gamma*q_next
         agent_loss = self.Q_eval.loss(q_traget, q_pred)
         agent_loss.backward()
         self.Q_eval.optim.step()
         self.decay_eps()
-
+        self.step_learn += 1
 
 
