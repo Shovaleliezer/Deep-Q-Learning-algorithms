@@ -24,7 +24,7 @@ for episode in range(1000):
         score += reward
         s = state_
         
-    print(f'score is: {score}, episode: {episode}, epsilon: {agent.epsilon:.2f}, loss:{loss}')
+    print(f'score is: {score}, episode: {episode}, epsilon: {agent.epsilon:.2f}')
 env.close()
 
     
