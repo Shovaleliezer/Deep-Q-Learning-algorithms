@@ -196,13 +196,9 @@ class NoisyPrioritizedAgentDuelingDDQN:
         self.learn_traget = 1000
     
     def choose_action(self, obs):
-        random = np.random.rand()
-        if random <= self.epsilon:
-            action = np.random.choice(self.action_space)
-        else:
-            s = torch.tensor(obs, dtype=torch.float).to(self.Q_eval.device)
-            _, actions = self.Q_eval.forward(s)
-            action = torch.argmax(actions).item()
+        s = torch.tensor(obs, dtype=torch.float).to(self.Q_eval.device)
+        _, actions = self.Q_eval.forward(s)
+        action = torch.argmax(actions).item()
         return action
     
     def decay_eps(self):
