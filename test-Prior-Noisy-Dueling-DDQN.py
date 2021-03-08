@@ -1,19 +1,13 @@
-'''
-    here we will test our dqn agent on space-invaders
-    first install gym with pip install gym
-    and import our agent from Prioritized-Dueling-DDQN
-    and change our memory a bit
-'''
-
+    
+ 
 import gym
 import torch
 import numpy as np
-from Prioritized-Dueling-DDQN import PrioritizedAgentDuelingDDQN 
-
+from Prior-Noisy-Dueling-DDQN import NoisyPrioritizedAgentDuelingDDQN    
 
 
 env = gym.make('SpaceInvaders-v0')
-agent = PrioritizedAgentDuelingDDQN((1,185,95), 6)
+agent = NoisyPrioritizedAgentDuelingDDQN((1,185,95), 6)
 for episode in range(1000):
     done = False
     s = env.reset()
@@ -29,10 +23,14 @@ for episode in range(1000):
         agent_loss = agent.learn()
         score += reward
         s = state_
-        loss += agent_loss
+        
     print(f'score is: {score}, episode: {episode}, epsilon: {agent.epsilon:.2f}, loss:{loss}')
 env.close()
 
     
-    
-    
+        
+        
+        
+        
+        
+        
